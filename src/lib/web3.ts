@@ -244,17 +244,20 @@ export const getTransactions = async (
  *
  * @param {TurnkeyBrowserClient} turnkeyClient - The Turnkey client instance used for the API connection.
  * @param {string} signWith - The Turnkey wallet account address or private key ID used to sign transactions
+ * @param {string} organizationId - Optional organization ID (sub-org ID for embedded wallets)
  * @returns {Promise<WalletClient>} A promise that resolves to the wallet client configured for the specified account and chain.
  */
 export const getTurnkeyWalletClient = async (
   turnkeyClient: TurnkeyBrowserClient | TurnkeyServerClient,
-  signWith: string
+  signWith: string,
+  organizationId?: string
 ) => {
   // Create a new account using the provided Turnkey client and the specified account for signing
+  // Use provided organizationId (sub-org) or fall back to root org from config
   const turnkeyAccount = await createAccount({
     // @ts-ignore - need to reconcile the TurnkeySDKClientConfig type between the sdk-server & sdk-browser SDKw
     client: turnkeyClient,
-    organizationId: turnkeyConfig.organizationId,
+    organizationId: organizationId || turnkeyConfig.organizationId,
     signWith,
   })
 

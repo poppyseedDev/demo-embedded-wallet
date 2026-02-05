@@ -1,4 +1,5 @@
 import { WalletsProvider } from "@/providers/wallet-provider"
+import { TurnkeyFhevmProvider } from "@/providers/fhevm-provider"
 
 import { Toaster } from "@/components/ui/sonner"
 import AuthGuard from "@/components/auth-guard"
@@ -14,8 +15,10 @@ export default function DashboardLayout({
     <AuthGuard>
       <main className="bg-muted/40 h-screen dark:bg-neutral-950/80">
         <WalletsProvider>
-          <NavMenu />
-          <div className="">{children}</div>
+          <TurnkeyFhevmProvider>
+            <NavMenu />
+            <div className="">{children}</div>
+          </TurnkeyFhevmProvider>
         </WalletsProvider>
         <SessionExpiryWarning />
         <Toaster />

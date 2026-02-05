@@ -2,6 +2,7 @@ import { TransactionsProvider } from "@/providers/transactions-provider"
 
 import Activity from "@/components/activity"
 import Assets from "@/components/assets"
+import ConfidentialAssets from "@/components/confidential-assets"
 import WalletCard from "@/components/wallet-card"
 
 export default function Dashboard() {
@@ -11,6 +12,7 @@ export default function Dashboard() {
         <WalletCard />
         <div className="flex flex-col gap-4">
           <Assets />
+          <ConfidentialAssets />
           <Activity />
         </div>
       </TransactionsProvider>
