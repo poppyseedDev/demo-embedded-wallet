@@ -80,8 +80,8 @@ export default function Activity() {
                   </TableCell>
                 </TableRow>
               ) : transactions.length > 0 ? (
-                transactions.map((transaction) => (
-                  <TableRow key={transaction.hash}>
+                transactions.map((transaction, index) => (
+                  <TableRow key={`${transaction.hash}-${transaction.status}-${index}`}>
                     <TableCell>
                       <Link
                         href={`https://sepolia.etherscan.io/tx/${transaction.hash}`}

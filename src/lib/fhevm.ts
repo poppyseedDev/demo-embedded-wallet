@@ -9,6 +9,9 @@ export {
   useFhevmStatus,
   useConfidentialBalances,
   useEthersSigner,
+  useShield,
+  useUnshield,
+  useConfidentialTransfer,
   createFhevmConfig,
 } from "@zama-fhe/react-sdk"
 

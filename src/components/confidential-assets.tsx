@@ -6,7 +6,7 @@ import {
   useConfidentialBalances,
   useEthersSigner,
 } from "@/lib/fhevm"
-import { Eye, EyeOff, Lock, Send, Shield, Unlock, Loader2, AlertCircle } from "lucide-react"
+import { Eye, Lock, Send, Shield, Unlock, Loader2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { useWallets } from "@/providers/wallet-provider"
@@ -28,6 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ShieldDialog } from "@/components/shield-dialog"
+import { UnshieldDialog } from "@/components/unshield-dialog"
+import { ConfidentialTransferDialog } from "@/components/confidential-transfer-dialog"
 
 interface TokenRowProps {
   token: WrapperToken
@@ -47,16 +50,6 @@ function TokenRow({ token, balanceData, isDecrypting, isLoading }: TokenRowProps
   const decryptedValue = balanceData?.decryptedValue
   const isRevealed = decryptedValue !== undefined
   const status = balanceData?.status
-
-  // Debug logging
-  console.log(`[TokenRow ${token.symbol}]`, {
-    handle,
-    hasBalance,
-    decryptedValue,
-    isRevealed,
-    status,
-    balanceData,
-  })
 
   return (
     <TableRow>
@@ -132,8 +125,13 @@ function TokenRow({ token, balanceData, isDecrypting, isLoading }: TokenRowProps
 export default function ConfidentialAssets() {
   const { state } = useWallets()
   const { selectedAccount } = state
-  const { isReady: fhevmIsReady, status: fhevmStatus, error: fhevmError } = useFhevmStatus()
-  const { provider: ethersProvider, isReady: ethersReady } = useEthersSigner()
+  const { isReady: fhevmIsReady, status: fhevmStatus } = useFhevmStatus()
+  const { isReady: ethersReady } = useEthersSigner()
+
+  // Dialog states
+  const [shieldOpen, setShieldOpen] = useState(false)
+  const [unshieldOpen, setUnshieldOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
 
   // Use react-sdk's useConfidentialBalances hook
   const {
@@ -145,13 +143,18 @@ export default function ConfidentialAssets() {
     isLoading,
     isError,
     error: balanceError,
-    status: balanceStatus,
+    refetch,
   } = useConfidentialBalances({
     contracts: WRAPPER_TOKEN_LIST.map((t) => ({ contractAddress: t.wrapper })),
     account: selectedAccount?.address as `0x${string}` | undefined,
     enabled: !!selectedAccount?.address && fhevmIsReady && ethersReady,
     decrypt: true,
   })
+
+  // Refetch balances after operations
+  const handleOperationSuccess = () => {
+    refetch()
+  }
 
   const handleRevealBalances = async () => {
     if (!canDecrypt) {
@@ -169,10 +172,6 @@ export default function ConfidentialAssets() {
   }
 
   const hasAnyBalance = balanceData?.some((b) => !!b?.result) ?? false
-
-  // Debug logging
-  console.log("[ConfidentialAssets] balanceData:", balanceData)
-  console.log("[ConfidentialAssets] hasAnyBalance:", hasAnyBalance, "isAllDecrypted:", isAllDecrypted, "canDecrypt:", canDecrypt)
 
   return (
     <Card>
@@ -205,9 +204,6 @@ export default function ConfidentialAssets() {
               Account: {selectedAccount.address.slice(0, 6)}...
             </span>
           )}
-          <span className="text-muted-foreground">
-            | hasBalance: {hasAnyBalance ? "yes" : "no"} | allDecrypted: {isAllDecrypted ? "yes" : "no"} | canDecrypt: {canDecrypt ? "yes" : "no"}
-          </span>
         </div>
       </CardHeader>
       <CardContent>
@@ -282,9 +278,8 @@ export default function ConfidentialAssets() {
             variant="outline"
             size="sm"
             className="gap-2"
-            onClick={() =>
-              toast.info("Shield: Convert ERC20 to Confidential tokens (coming soon)")
-            }
+            onClick={() => setShieldOpen(true)}
+            disabled={!fhevmIsReady}
           >
             <Shield className="h-4 w-4" />
             Shield Tokens
@@ -293,9 +288,8 @@ export default function ConfidentialAssets() {
             variant="outline"
             size="sm"
             className="gap-2"
-            onClick={() =>
-              toast.info("Unshield: Convert Confidential to ERC20 tokens (coming soon)")
-            }
+            onClick={() => setUnshieldOpen(true)}
+            disabled={!fhevmIsReady || !hasAnyBalance}
           >
             <Unlock className="h-4 w-4" />
             Unshield Tokens
@@ -304,14 +298,30 @@ export default function ConfidentialAssets() {
             variant="outline"
             size="sm"
             className="gap-2"
-            onClick={() =>
-              toast.info("Confidential Transfer (coming soon)")
-            }
+            onClick={() => setTransferOpen(true)}
+            disabled={!fhevmIsReady || !hasAnyBalance}
           >
             <Send className="h-4 w-4" />
             Transfer
           </Button>
         </div>
+
+        {/* Dialogs */}
+        <ShieldDialog
+          open={shieldOpen}
+          onOpenChange={setShieldOpen}
+          onSuccess={handleOperationSuccess}
+        />
+        <UnshieldDialog
+          open={unshieldOpen}
+          onOpenChange={setUnshieldOpen}
+          onSuccess={handleOperationSuccess}
+        />
+        <ConfidentialTransferDialog
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+          onSuccess={handleOperationSuccess}
+        />
 
         <div className="mt-4 rounded-lg bg-muted/50 p-3">
           <p className="text-xs text-muted-foreground">
